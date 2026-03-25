@@ -1,0 +1,5 @@
+flask>=3.0
+owslib>=0.29
+matplotlib>=3.8
+Pillow>=10.0
+requests>=2.31
