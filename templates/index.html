@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>gis_plot – Zivilschutz A0 PDF</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.12);
+      padding: 2rem;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      color: #003366;
+    }
+
+    label {
+      display: block;
+      font-size: .875rem;
+      font-weight: 600;
+      margin-bottom: .3rem;
+      color: #333;
+    }
+
+    .field { margin-bottom: 1.2rem; }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: .95rem;
+      appearance: auto;
+    }
+
+    select[multiple] { height: 180px; }
+
+    .bbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .6rem;
+    }
+
+    .bbox-grid input { width: 100%; }
+
+    .hint {
+      font-size: .78rem;
+      color: #666;
+      margin-top: .3rem;
+    }
+
+    button {
+      width: 100%;
+      padding: .7rem;
+      background: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    button:hover:not(:disabled) { background: #004a99; }
+    button:disabled { background: #888; cursor: not-allowed; }
+
+    #status {
+      margin-top: 1rem;
+      font-size: .875rem;
+      min-height: 1.4em;
+      color: #555;
+    }
+
+    #status.error { color: #c0392b; }
+    #status.ok    { color: #27ae60; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #ccc;
+      border-top-color: #003366;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: .4rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Zivilschutz GIS &rarr; A0 PDF</h1>
+
+    <div class="field">
+      <label for="title">Kartentitel</label>
+      <input type="text" id="title" value="Zivilschutz Karte" />
+    </div>
+
+    <div class="field">
+      <label for="layers">WMS-Layer <span style="font-weight:normal">(Ctrl/⌘ für Mehrfachauswahl)</span></label>
+      <select id="layers" multiple>
+        <option disabled>Lade Layer …</option>
+      </select>
+      <p class="hint">Tipp: Suche nach „zivilschutz" oder „schutzraum".</p>
+    </div>
+
+    <div class="field">
+      <label>Kartenausschnitt (EPSG:2056 / LV95)</label>
+      <div class="bbox-grid">
+        <div>
+          <label style="font-weight:normal;font-size:.8rem">xmin (Ost)</label>
+          <input type="text" id="xmin" value="2480000" />
+        </div>
+        <div>
+          <label style="font-weight:normal;font-size:.8rem">ymin (Nord)</label>
+          <input type="text" id="ymin" value="1070000" />
+        </div>
+        <div>
+          <label style="font-weight:normal;font-size:.8rem">xmax (Ost)</label>
+          <input type="text" id="xmax" value="2840000" />
+        </div>
+        <div>
+          <label style="font-weight:normal;font-size:.8rem">ymax (Nord)</label>
+          <input type="text" id="ymax" value="1300000" />
+        </div>
+      </div>
+      <p class="hint">Standard: gesamte Schweiz in LV95-Koordinaten.</p>
+    </div>
+
+    <button id="generate-btn">PDF generieren &amp; herunterladen</button>
+    <div id="status"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
