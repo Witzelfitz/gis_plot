@@ -1,13 +1,14 @@
 const express = require('express');
 const path = require('path');
 
-const { staticDir, templateDir } = require('./config');
+const { staticDir, templateDir, trustProxy } = require('./config');
 const { HttpError } = require('./errors/http-error');
 const { apiRouter } = require('./routes/api');
 
 const app = express();
 
 app.disable('x-powered-by');
+app.set('trust proxy', trustProxy);
 app.use(express.json({ limit: '1mb' }));
 app.use('/vendor', express.static(path.join(__dirname, '..', 'node_modules')));
 app.use('/static', express.static(staticDir));

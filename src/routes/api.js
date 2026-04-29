@@ -1,12 +1,18 @@
 const express = require('express');
 
+const { rateLimit } = require('../config');
 const { HttpError } = require('../errors/http-error');
+const { createIpRateLimit } = require('../middleware/rate-limit');
 const { validateGenerateRequest } = require('../middleware/validate-generate-request');
 const { generatePdf } = require('../services/generate-service');
 const { listLayers } = require('../services/wms-service');
 const { sanitizeFilename } = require('../utils/file');
 
 const router = express.Router();
+const generateRateLimit = createIpRateLimit({
+  windowMs: rateLimit.generateWindowMs,
+  keyPrefix: 'generate',
+});
 
 router.get('/layers', async (_req, res, next) => {
   try {
@@ -17,7 +23,7 @@ router.get('/layers', async (_req, res, next) => {
   }
 });
 
-router.post('/generate', validateGenerateRequest, async (req, res, next) => {
+router.post('/generate', generateRateLimit, validateGenerateRequest, async (req, res, next) => {
   try {
     const pdfBuffer = await generatePdf(req.generateRequest);
     res.setHeader('Content-Type', 'application/pdf');
