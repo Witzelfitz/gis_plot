@@ -4,33 +4,80 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>gis_plot – Zivilschutz A0 PDF</title>
+  <link rel="stylesheet" href="/vendor/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="/vendor/leaflet-draw/dist/leaflet.draw.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: system-ui, sans-serif;
-      background: #f0f2f5;
-      color: #222;
+      background:
+        radial-gradient(circle at top left, rgba(18, 105, 181, 0.16), transparent 28rem),
+        linear-gradient(180deg, #eef4f8 0%, #f7fafc 100%);
+      color: #1f2933;
       min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
       padding: 2rem 1rem;
     }
 
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.12);
-      padding: 2rem;
+    .app-shell {
       width: 100%;
-      max-width: 640px;
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+      gap: 1.25rem;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.94);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .map-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 760px;
+    }
+
+    .panel-head {
+      padding: 1.4rem 1.5rem 1rem;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,253,0.98));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      padding: .28rem .62rem;
+      border-radius: 999px;
+      background: rgba(0, 63, 136, 0.08);
+      color: #0f4c81;
+      font-size: .73rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
     }
 
     h1 {
-      font-size: 1.4rem;
-      margin-bottom: 1.5rem;
-      color: #003366;
+      font-size: clamp(1.45rem, 2vw, 2rem);
+      line-height: 1.15;
+      margin-bottom: .5rem;
+      color: #08223a;
+    }
+
+    .lead {
+      color: #52606d;
+      font-size: .96rem;
+      line-height: 1.5;
+    }
+
+    .panel-body {
+      padding: 1.4rem 1.5rem 1.5rem;
     }
 
     label {
@@ -44,16 +91,65 @@
     .field { margin-bottom: 1.2rem; }
 
     input[type="text"],
+    input[type="number"],
     select {
       width: 100%;
-      padding: .5rem .75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      padding: .68rem .82rem;
+      border: 1px solid #cbd2d9;
+      border-radius: 10px;
       font-size: .95rem;
       appearance: auto;
+      background: #fff;
+      color: #102a43;
+      transition: border-color .15s ease, box-shadow .15s ease;
     }
 
-    select[multiple] { height: 180px; }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #2f80ed;
+      box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.15);
+    }
+
+    input[readonly] {
+      background: #f4f7fb;
+      color: #486581;
+    }
+
+    select[multiple] {
+      height: 280px;
+      padding: .35rem;
+    }
+
+    select optgroup {
+      font-style: normal;
+      font-weight: 700;
+      color: #486581;
+    }
+
+    .inline-actions {
+      display: flex;
+      gap: .65rem;
+      flex-wrap: wrap;
+      margin-top: .85rem;
+    }
+
+    .secondary-btn {
+      width: auto;
+      padding: .62rem .9rem;
+      background: #eaf2fb;
+      color: #0f4c81;
+      border: 1px solid #c8ddf4;
+      border-radius: 999px;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .secondary-btn:hover:not(:disabled) {
+      background: #dbeafb;
+    }
 
     .bbox-grid {
       display: grid;
@@ -63,26 +159,49 @@
 
     .bbox-grid input { width: 100%; }
 
+    .selection-summary {
+      margin-top: .8rem;
+      padding: .85rem .95rem;
+      border-radius: 12px;
+      background: #f6f9fc;
+      border: 1px solid #d9e2ec;
+      color: #334e68;
+      font-size: .8rem;
+      line-height: 1.55;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
     .hint {
       font-size: .78rem;
       color: #666;
       margin-top: .3rem;
+      line-height: 1.45;
     }
 
     button {
       width: 100%;
-      padding: .7rem;
-      background: #003366;
+      padding: .82rem;
+      background: linear-gradient(135deg, #0a5bc4, #08438f);
       color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       font-size: 1rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: background .15s;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 10px 24px rgba(8, 67, 143, 0.22);
     }
 
-    button:hover:not(:disabled) { background: #004a99; }
-    button:disabled { background: #888; cursor: not-allowed; }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(8, 67, 143, 0.24);
+    }
+
+    button:disabled {
+      background: #829ab1;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
 
     #status {
       margin-top: 1rem;
@@ -93,6 +212,53 @@
 
     #status.error { color: #c0392b; }
     #status.ok    { color: #27ae60; }
+
+    #map {
+      min-height: 560px;
+      flex: 1;
+    }
+
+    .map-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: .95rem 1.15rem 1.1rem;
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(245, 248, 250, 0.9);
+      font-size: .84rem;
+      color: #52606d;
+    }
+
+    .map-meta strong {
+      color: #102a43;
+    }
+
+    .leaflet-container {
+      font: inherit;
+    }
+
+    .leaflet-control-attribution {
+      font-size: .7rem;
+    }
+
+    .corner-handle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #0a5bc4;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+    }
+
+    .center-handle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #0a5bc4;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+    }
 
     .spinner {
       display: inline-block;
@@ -106,52 +272,122 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .map-panel {
+        min-height: 0;
+      }
+
+      #map {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 1rem .75rem;
+      }
+
+      .panel-head,
+      .panel-body {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .bbox-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        min-height: 360px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Zivilschutz GIS &rarr; A0 PDF</h1>
-
-    <div class="field">
-      <label for="title">Kartentitel</label>
-      <input type="text" id="title" value="Zivilschutz Karte" />
-    </div>
-
-    <div class="field">
-      <label for="layers">WMS-Layer <span style="font-weight:normal">(Ctrl/⌘ für Mehrfachauswahl)</span></label>
-      <select id="layers" multiple>
-        <option disabled>Lade Layer …</option>
-      </select>
-      <p class="hint">Tipp: Suche nach „zivilschutz" oder „schutzraum".</p>
-    </div>
-
-    <div class="field">
-      <label>Kartenausschnitt (EPSG:2056 / LV95)</label>
-      <div class="bbox-grid">
-        <div>
-          <label style="font-weight:normal;font-size:.8rem">xmin (Ost)</label>
-          <input type="text" id="xmin" value="2480000" />
-        </div>
-        <div>
-          <label style="font-weight:normal;font-size:.8rem">ymin (Nord)</label>
-          <input type="text" id="ymin" value="1070000" />
-        </div>
-        <div>
-          <label style="font-weight:normal;font-size:.8rem">xmax (Ost)</label>
-          <input type="text" id="xmax" value="2840000" />
-        </div>
-        <div>
-          <label style="font-weight:normal;font-size:.8rem">ymax (Nord)</label>
-          <input type="text" id="ymax" value="1300000" />
-        </div>
+  <div class="app-shell">
+    <section class="panel map-panel">
+      <div class="panel-head">
+        <div class="eyebrow">Kartenausschnitt</div>
+        <h1>Zivilschutz GIS &rarr; A0 PDF</h1>
+        <p class="lead">Der Druckrahmen bleibt immer im A0-Querformat. Ziehe ein Hilfsrechteck für die Größe auf oder passe den Rahmen direkt über die Eckpunkte an.</p>
       </div>
-      <p class="hint">Standard: gesamte Schweiz in LV95-Koordinaten.</p>
-    </div>
+      <div id="map"></div>
+      <div class="map-meta">
+        <span><strong>OSM-Hintergrund:</strong> Leaflet mit OpenStreetMap-Kacheln</span>
+        <span><strong>Auswahl:</strong> Weiße Eckpunkte ziehen, Mittelpunkt verschieben</span>
+      </div>
+    </section>
 
-    <button id="generate-btn">PDF generieren &amp; herunterladen</button>
-    <div id="status"></div>
+    <section class="panel">
+      <div class="panel-head">
+        <div class="eyebrow">Druckauftrag</div>
+        <h1>Layer und Ausgabe</h1>
+        <p class="lead">Empfohlene Zivilschutz-Layer stehen oben. Die Suche filtert Titel, Layer-ID und Beschreibung.</p>
+      </div>
+
+      <div class="panel-body">
+        <div class="field">
+          <label for="title">Kartentitel</label>
+          <input type="text" id="title" placeholder="Optionaler Titel für den Ausdruck" />
+        </div>
+
+        <div class="field">
+          <label for="layer-filter">Layer suchen</label>
+          <input type="text" id="layer-filter" placeholder="z. B. kultur, notfall, kernanlage, alarm …" />
+        </div>
+
+        <div class="field">
+          <label for="layers">WMS-Layer <span style="font-weight:normal">(Ctrl/⌘ für Mehrfachauswahl)</span></label>
+          <select id="layers" multiple>
+            <option disabled>Lade Layer …</option>
+          </select>
+          <p class="hint">Empfohlen für ZS: Landeskarte, KGS Inventar, Notfallschutz Kernanlagen sowie relevante Alarmzentralen.</p>
+        </div>
+
+        <div class="field">
+          <label>Druckrahmen (EPSG:2056 / LV95)</label>
+          <div class="bbox-grid">
+            <div>
+              <label style="font-weight:normal;font-size:.8rem">Mittelpunkt Ost</label>
+              <input type="number" id="center-x" step="1" />
+            </div>
+            <div>
+              <label style="font-weight:normal;font-size:.8rem">Mittelpunkt Nord</label>
+              <input type="number" id="center-y" step="1" />
+            </div>
+            <div>
+              <label style="font-weight:normal;font-size:.8rem">Breite Druckrahmen (m)</label>
+              <input type="number" id="frame-width" step="100" min="1000" />
+            </div>
+            <div>
+              <label style="font-weight:normal;font-size:.8rem">Höhe A0 quer (m)</label>
+              <input type="number" id="frame-height" step="100" readonly />
+            </div>
+          </div>
+          <div class="inline-actions">
+            <button type="button" id="use-view-btn" class="secondary-btn">Ansicht als A0 setzen</button>
+            <button type="button" id="shrink-frame-btn" class="secondary-btn">10% kleiner</button>
+            <button type="button" id="grow-frame-btn" class="secondary-btn">10% größer</button>
+            <button type="button" id="reset-extent-btn" class="secondary-btn">Schweiz zurücksetzen</button>
+          </div>
+          <p class="hint">Der Rahmen bleibt immer im Seitenverhältnis von A0 quer. Die weißen Eckpunkte lassen sich direkt ziehen; die Größe bleibt dabei im fixen Format.</p>
+          <div id="selection-summary" class="selection-summary"></div>
+        </div>
+
+        <button id="generate-btn">PDF generieren &amp; herunterladen</button>
+        <div id="status"></div>
+      </div>
+    </section>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/vendor/leaflet/dist/leaflet.js" defer></script>
+  <script src="/vendor/leaflet-draw/dist/leaflet.draw.js" defer></script>
+  <script src="/vendor/proj4/dist/proj4.js" defer></script>
+  <script src="/static/app.js" defer></script>
 </body>
 </html>
