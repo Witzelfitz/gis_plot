@@ -2,16 +2,18 @@
 
 Local web application for printing **Zivilschutz GIS maps** from the Swiss Federal Geoportal ([map.geo.admin.ch](https://map.geo.admin.ch)) as print-ready **A0 landscape PDFs** (1189 × 841 mm).
 
+Fork of [`GentleBillow/gis_plot`](https://github.com/GentleBillow/gis_plot), extended with a Node.js-only runtime, interactive map-based extent selection, and usability improvements for Zivilschutz workflows.
+
 ---
 
 ## Features
 
 - Browse all WMS layers available on `wms.geo.admin.ch`
 - Choose the print extent interactively on a Leaflet map with an OpenStreetMap background
-- Keep the print frame fixed to the A0 landscape aspect ratio and rotate it as needed
+- Keep the print frame fixed to the A0 landscape aspect ratio
 - Keep frequently used Zivilschutz layers pinned at the top of the selection
 - Select one or more layers and define a map extent in Swiss LV95 (EPSG:2056)
-- Generates an A0 PDF with title block, north arrow, and scale bar
+- Generates an A0 PDF with optional title, north arrow, scale bar, and print date
 - Runs entirely locally — no data leaves your machine
 
 ---
@@ -26,7 +28,7 @@ Local web application for printing **Zivilschutz GIS maps** from the Swiss Feder
 ## Installation
 
 ```bash
-git clone https://github.com/GentleBillow/gis_plot.git
+git clone https://github.com/Witzelfitz/gis_plot.git
 cd gis_plot
 npm install
 ```
@@ -44,9 +46,9 @@ npm start
 Open [http://localhost:1726](http://localhost:1726) in your browser.
 
 1. Wait for the layer list to load (fetched live from geo.admin.ch)
-2. Draw the desired extent on the Leaflet map, move the center marker, or übernehmen the current map view
+2. Draw the desired extent on the Leaflet map, move the center marker, or use the current map view
 3. Select one or more WMS layers (Ctrl/⌘ for multi-select); common Zivilschutz layers are pinned at the top
-4. Adjust rotation or frame size if needed, then enter a title
+4. Adjust frame size if needed, then enter a title
 5. Click **PDF generieren** — the PDF downloads automatically
 
 The complete application stack now runs in Node.js: Express routes, request validation middleware, WMS access, tile stitching, and A0 PDF rendering.
@@ -81,7 +83,7 @@ Generates and streams an A0 PDF.
     "centerY": 1185000,
     "width": 22000,
     "height": 15563.5,
-    "rotationDeg": 25
+    "rotationDeg": 0
   },
   "crs": "EPSG:2056",
   "title": "Zivilschutz Übersicht Schweiz"
@@ -92,9 +94,9 @@ Generates and streams an A0 PDF.
 |---|---|---|
 | `layers` | `string[]` | One or more WMS layer IDs (required) |
 | `bbox` | `number[4]` | Axis-aligned bounding box in `crs` units (required for compatibility; UI sends it automatically) |
-| `printArea` | `object` | Fixed A0 landscape frame with `centerX`, `centerY`, `width`, `height`, `rotationDeg` |
+| `printArea` | `object` | Fixed A0 landscape frame with `centerX`, `centerY`, `width`, `height`, `rotationDeg` (`0` in the current UI) |
 | `crs` | `string` | Coordinate reference system (default: `EPSG:2056`) |
-| `title` | `string` | Title printed on the map (default: `Zivilschutz Karte`) |
+| `title` | `string` | Optional title printed on the map |
 
 **Response:** `application/pdf` file download.
 
@@ -115,3 +117,8 @@ Generates and streams an A0 PDF.
 
 Map data © [swisstopo](https://www.swisstopo.admin.ch/) via [wms.geo.admin.ch](https://wms.geo.admin.ch/).
 Usage is free for public geodata. See [geo.admin.ch terms of use](https://www.geo.admin.ch/en/geo-services/geo-services/terms-of-use.html).
+
+## GitHub About
+
+Suggested repository description:
+`Node.js web app for generating A0 Zivilschutz GIS PDFs from geo.admin.ch with interactive map-based extent selection.`
